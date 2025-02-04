@@ -13,8 +13,6 @@ const url = "https://dummyjson.com/products";
 export default function Home() {
   const [products, setProducts] = useState<ProductData[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductData[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [priceRange, setPriceRange] = useState([0, 1000]); // Example price range [min, max]
   const [rating, setRating] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,13 +23,6 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const ref = useRef(null);
 
-  // Fetch categories (simulated or fetched from API if necessary)
-  const fetchCategories = () => {
-    const dummyCategories = ["Electronics", "Clothing", "Accessories", "Books"];
-    setCategories(dummyCategories);
-  };
-
-  // Fetch products from the API
   async function fetchProducts() {
     setLoading(true);
     try {
@@ -48,12 +39,10 @@ export default function Home() {
     setLoading(false);
   }
 
-  // Handle search input changes for autocomplete
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     
-    // Filter suggestions based on search query
     const filteredSuggestions = allProducts
       .map((product) => product.title)
       .filter((title) => title.toLowerCase().includes(query.toLowerCase()));
@@ -61,12 +50,8 @@ export default function Home() {
     setSuggestions(filteredSuggestions);
   };
 
-  // Filter products based on category, price range, and rating
   const filterProducts = () => {
     const filtered = allProducts.filter((product) => {
-      const isCategoryMatch = selectedCategory
-        ? product.category.toLowerCase() === selectedCategory.toLowerCase()
-        : true;
 
       const isPriceMatch =
         product.price >= priceRange[0] && product.price <= priceRange[1];
@@ -77,19 +62,17 @@ export default function Home() {
         ? product.title.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
 
-      return isCategoryMatch && isPriceMatch && isRatingMatch && isSearchMatch;
+      return isPriceMatch && isRatingMatch && isSearchMatch;
     });
     setFilteredProducts(filtered);
   };
 
-  // Execute filtering whenever any filter or page changes
   useEffect(() => {
     filterProducts();
-  }, [selectedCategory, priceRange, rating, searchQuery, allProducts]);
+  }, [priceRange, rating, searchQuery, allProducts]);
 
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
   }, [page]);
 
   useEffect(() => {
@@ -152,18 +135,6 @@ export default function Home() {
 
       <Wrapper>
         <div className="mb-4">
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="p-2 border rounded"
-          >
-            <option value="">Select Category</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
 
           <input
             type="range"
