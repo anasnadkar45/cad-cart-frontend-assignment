@@ -1,101 +1,201 @@
-import Image from "next/image";
+"use client"
+import { Topbar } from "@/components/global/Topbar";
+import { Wrapper } from "@/components/global/Wrapper";
+import { ProductList } from "@/components/products/ProductList";
+import { Label } from "@/components/ui/label";
+import { SidebarGroup, SidebarGroupContent, SidebarInput } from "@/components/ui/sidebar";
+import { ProductData } from "@/lib/types";
+import { LoaderCircle, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+const url = "https://dummyjson.com/products";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductData[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [priceRange, setPriceRange] = useState([0, 1000]); // Example price range [min, max]
+  const [rating, setRating] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [noMorePosts, setNoMorePosts] = useState(false);
+  const [allProducts, setAllProducts] = useState<ProductData[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]); // For search autocomplete
+  const [page, setPage] = useState(1);
+  const ref = useRef(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Fetch categories (simulated or fetched from API if necessary)
+  const fetchCategories = () => {
+    const dummyCategories = ["Electronics", "Clothing", "Accessories", "Books"];
+    setCategories(dummyCategories);
+  };
+
+  // Fetch products from the API
+  async function fetchProducts() {
+    setLoading(true);
+    try {
+      const response = await fetch(`${url}?limit=8&skip=${page * 8}`);
+      const result = await response.json();
+      setAllProducts((prev) => [...prev, ...result.products]);
+      setProducts(result.products);
+      if (result.products.length < 8) {
+        setNoMorePosts(true);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+    setLoading(false);
+  }
+
+  // Handle search input changes for autocomplete
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    // Filter suggestions based on search query
+    const filteredSuggestions = allProducts
+      .map((product) => product.title)
+      .filter((title) => title.toLowerCase().includes(query.toLowerCase()));
+
+    setSuggestions(filteredSuggestions);
+  };
+
+  // Filter products based on category, price range, and rating
+  const filterProducts = () => {
+    const filtered = allProducts.filter((product) => {
+      const isCategoryMatch = selectedCategory
+        ? product.category.toLowerCase() === selectedCategory.toLowerCase()
+        : true;
+
+      const isPriceMatch =
+        product.price >= priceRange[0] && product.price <= priceRange[1];
+
+      const isRatingMatch = product.rating >= rating;
+
+      const isSearchMatch = searchQuery
+        ? product.title.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+
+      return isCategoryMatch && isPriceMatch && isRatingMatch && isSearchMatch;
+    });
+    setFilteredProducts(filtered);
+  };
+
+  // Execute filtering whenever any filter or page changes
+  useEffect(() => {
+    filterProducts();
+  }, [selectedCategory, priceRange, rating, searchQuery, allProducts]);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [page]);
+
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '20px',
+      threshold: 1.0,
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !loading && !noMorePosts) {
+        setPage((prev) => prev + 1);
+      }
+    }, options)
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current)
+      }
+      observer.disconnect();
+    }
+  }, [ref, noMorePosts, loading])
+
+  return (
+    <>
+      <Topbar>
+        <div>
+          <SidebarGroup className="py-0">
+            <SidebarGroupContent className="relative">
+              <Label htmlFor="search" className="sr-only">
+                Search
+              </Label>
+              <SidebarInput
+                id="search"
+                placeholder="Search the product..."
+                className="w-[300px] pl-8"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
+              <div className="absolute z-40 top-12 left-0 w-full bg-white shadow-lg max-h-64 overflow-y-auto">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="p-2 cursor-pointer hover:bg-gray-100"
+                    onClick={() => setSearchQuery(suggestion)}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </Topbar>
+
+      <Wrapper>
+        <div className="mb-4">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="p-2 border rounded"
+          >
+            <option value="">Select Category</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="range"
+            min="0"
+            max="1000"
+            value={priceRange[1]}
+            onChange={(e) => setPriceRange([priceRange[0], +e.target.value])}
+            className="p-2 ml-4"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <span>Price: ${priceRange[0]} - ${priceRange[1]}</span>
+
+          <select
+            value={rating}
+            onChange={(e) => setRating(+e.target.value)}
+            className="p-2 ml-4"
+          >
+            <option value={0}>Rating: All</option>
+            <option value={4}>Rating: 4 & above</option>
+            <option value={5}>Rating: 5</option>
+          </select>
+        </div>
+
+        <ProductList products={filteredProducts as ProductData[]} />
+        {loading && (
+          <p className="w-full flex justify-center p-10">
+            <LoaderCircle className="animate-spin text-yellow-500" />
+          </p>
+        )}
+        {noMorePosts && <p className="w-full text-center">No more posts</p>}
+
+        <div ref={ref}></div>
+      </Wrapper>
+    </>
   );
 }
