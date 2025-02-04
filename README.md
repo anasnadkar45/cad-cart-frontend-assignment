@@ -8,7 +8,6 @@ This project is an **Advanced Product Catalog** for an e-commerce platform built
 - **Product Catalog**: Displays product name, description, price, image, and stock status.
 - **Dynamic Filtering**: Filter products based on category, price range, and rating with real-time updates.
 - **Shopping Cart**: Add and remove products, view the cart summary, and calculate total price.
-- **Real-Time Stock Updates**: Uses WebSockets or polling to ensure product availability is up to date.
 - **Product Detail Page**: View detailed product info, including related products.
 - **Responsive Design**: Fully responsive layout optimized for mobile, tablet, and desktop devices.
 
@@ -36,8 +35,8 @@ Ensure you have the following installed:
    Open your terminal or command prompt and run the following command:
 
    ```bash
-   git clone https://github.com/anasnadkar45/advanced-product-catalog.git
-   cd advanced-product-catalog
+   https://github.com/anasnadkar45/cad-cart-frontend-assignment
+   cd cad-cart-frontend-assignment
    ```
 
    Alternatively, you can download the repository as a ZIP file from GitHub and extract it to your local machine.
@@ -59,7 +58,7 @@ Ensure you have the following installed:
    After installing the dependencies, start the project by running:
 
    ```bash
-   npm start
+   npm run dev
    ```
 
    This will start the development server, and you can view the app at [http://localhost:3000](http://localhost:3000).
