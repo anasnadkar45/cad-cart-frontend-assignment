@@ -15,8 +15,7 @@ This project is an **Advanced Product Catalog** for an e-commerce platform built
 
 - **React**: JavaScript library for building user interfaces.
 - **Tailwind CSS**: Utility-first CSS framework for styling.
-- **React Context API**: For managing global state (cart, filters).
-- **WebSockets or Polling**: For real-time stock updates.
+- **React Redux**: For managing global state (cart, filters).
 - **Mock APIs**: Data is fetched from DummyJSON API endpoints.
 
 ## Getting Started
